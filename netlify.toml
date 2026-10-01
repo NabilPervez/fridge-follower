@@ -1,0 +1,21 @@
+[build]
+  base = "app"
+  command = "npm ci && npm run build"
+  publish = "dist"
+
+# SPA routing: every path serves the app shell.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# The service worker must never be served stale, or updates stall.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
