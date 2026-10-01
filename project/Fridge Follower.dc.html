@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/lucide-static@0.460.0/font/lucide.css">
+<style>
+body{margin:0;background:#07070F;font-family:Inter,system-ui,sans-serif;color:#F3F1FA;-webkit-font-smoothing:antialiased}
+a{color:#9DB4FF}a:hover{color:#F3F1FA}
+button{-webkit-tap-highlight-color:transparent}
+input::placeholder{color:#8784A6}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-wrap:wrap;gap:48px;justify-content:center;align-items:flex-start;padding:48px 24px;box-sizing:border-box">
+
+<div style="flex:0 1 300px;display:flex;flex-direction:column;gap:20px;padding-top:24px">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <span style="font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#8784A6;text-transform:uppercase">Interactive prototype · v1</span>
+    <h1 style="margin:0;font:700 32px/1.1 'Space Grotesk',sans-serif;letter-spacing:-.01em">Fridge Follower</h1>
+    <p style="margin:0;font-size:14px;line-height:1.5;color:#A9A6C4;text-wrap:pretty">Built from the PRD's jewel-tone tokens, Space Grotesk + Inter, 16px cards and 999px chips. Everything runs on local state, so the demo behaves like the offline app.</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.45;color:#A9A6C4">
+    <span style="font:600 12px Inter;color:#F3F1FA">Try</span>
+    <span>Fridge: tap a row to lower it, hold for the level sheet, swipe right for Full or left for Out.</span>
+    <span>Shop: check an item to restock it to Full (undo lasts 5s). Tap a Plan badge to see which recipes need it.</span>
+    <span>Today and Plan: tap a slot to pick a recipe or free text. Tap ✓ to mark it cooked, which lowers ingredient levels.</span>
+    <span>Tweaks: 4 or 5 tabs (open question in the PRD), and fridge row density.</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;line-height:1.45;color:#8784A6">
+    <span style="font:600 12px Inter;color:#F3F1FA">Assumptions</span>
+    <span>Named "Fridge Follower" per the PRD's Name field. Dark theme only for now. Today is Wed, Sep 30; the week starts on Monday.</span>
+  </div>
+</div>
+
+<div style="flex:0 0 auto;width:414px;height:868px;border-radius:60px;background:#05050B;padding:12px;box-sizing:border-box;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 40px 80px rgba(0,0,0,.5)">
+<div style="position:relative;width:390px;height:844px;border-radius:48px;overflow:hidden;background:#0F1020;display:flex;flex-direction:column;font-family:Inter,sans-serif;font-variant-numeric:tabular-nums">
+
+  <div style="flex:0 0 47px;display:flex;align-items:center;justify-content:space-between;padding:0 32px 0 36px;font:600 15px Inter">
+    <span>9:41</span>
+    <div style="display:flex;gap:6px;align-items:center;font-size:16px"><i class="icon-signal"></i><i class="icon-wifi"></i><i class="icon-battery-full" style="font-size:20px"></i></div>
+  </div>
+
+  <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:0 0 56px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 20px">
+      <div style="display:flex;flex-direction:column">
+        <span style="font:500 12px Inter;color:#A9A6C4;letter-spacing:.04em;text-transform:uppercase">Today</span>
+        <span style="font:700 24px/1.15 'Space Grotesk',sans-serif">Wed, Sep 30</span>
+      </div>
+      <div style="display:flex;gap:0">
+        <sc-if value="{{ showHeaderRecipes }}"><button onClick="{{ openRecipes }}" aria-label="Recipes" style="width:44px;height:44px;border:0;background:none;color:#F3F1FA;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center"><i class="icon-book-open"></i></button></sc-if>
+        <button onClick="{{ openSettings }}" aria-label="Settings" style="width:44px;height:44px;border:0;background:none;color:#F3F1FA;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center"><i class="icon-settings"></i></button>
+      </div>
+    </div>
+    <div style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:12px 16px 104px;scrollbar-width:none">
+      <div style="display:flex;gap:8px">
+        <button onClick="{{ openLow }}" style="flex:1 1 0;min-height:56px;display:flex;align-items:center;gap:10px;padding:0 14px;border-radius:16px;border:1px solid rgba(214,38,79,.35);background:rgba(214,38,79,.14);color:#F3F1FA;font:inherit;cursor:pointer;text-align:left">
+          <i class="icon-triangle-alert" style="font-size:18px;color:#FF7A95"></i>
+          <span style="display:flex;flex-direction:column;flex:1;min-width:0"><span style="font:600 16px Inter">{{ lowCount }} low or out</span><span style="font-size:12px;color:#A9A6C4">Fridge</span></span>
+          <i class="icon-chevron-right" style="color:#A9A6C4"></i>
+        </button>
+        <button onClick="{{ goShop }}" style="flex:1 1 0;min-height:56px;display:flex;align-items:center;gap:10px;padding:0 14px;border-radius:16px;border:1px solid rgba(15,157,118,.35);background:rgba(15,157,118,.14);color:#F3F1FA;font:inherit;cursor:pointer;text-align:left">
+          <i class="icon-shopping-cart" style="font-size:18px;color:#3FD1A6"></i>
+          <span style="display:flex;flex-direction:column;flex:1;min-width:0"><span style="font:600 16px Inter">{{ shopCount }} on list</span><span style="font-size:12px;color:#A9A6C4">Shopping</span></span>
+          <i class="icon-chevron-right" style="color:#A9A6C4"></i>
+        </button>
+      </div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;padding:8px 4px 0">
+        <span style="font:600 16px 'Space Grotesk',sans-serif">Meals</span>
+        <span style="font-size:12px;color:#A9A6C4">{{ todayPlanned }} of 5 planned</span>
+      </div>
+      <sc-for list="{{ todaySlots }}" as="s" hint-placeholder-count="5">
+        <div style="display:flex;align-items:center;gap:12px;background:#1A1B33;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:12px;min-height:72px;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,.25)">
+          <button onClick="{{ s.open }}" style="flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:12px;background:none;border:0;padding:0;color:inherit;text-align:left;cursor:pointer;font:inherit">
+            <div style="flex:0 0 40px;height:40px;border-radius:12px;background:#24264A;display:flex;align-items:center;justify-content:center;color:#A9A6C4;font-size:20px"><i class="{{ s.icon }}"></i></div>
+            <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px">
+              <span style="font:600 12px Inter;color:#A9A6C4;letter-spacing:.05em;text-transform:uppercase">{{ s.slotName }}</span>
+              <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                <sc-if value="{{ s.hasDot }}"><span style="flex:0 0 8px;height:8px;border-radius:99px;background:{{ s.dot }}"></span></sc-if>
+                <span style="font:500 16px Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:{{ s.titleColor }};text-decoration:{{ s.deco }}">{{ s.title }}</span>
+              </div>
+            </div>
+          </button>
+          <sc-if value="{{ s.canCook }}"><button onClick="{{ s.toggleCook }}" aria-label="Mark cooked" style="flex:0 0 44px;height:44px;border-radius:999px;border:1.5px solid {{ s.cookBorder }};background:{{ s.cookBg }};color:{{ s.cookColor }};cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center"><i class="icon-check"></i></button></sc-if>
+          <sc-if value="{{ s.isEmpty }}"><button onClick="{{ s.open }}" aria-label="Add" style="flex:0 0 44px;height:44px;border-radius:999px;border:1.5px dashed rgba(255,255,255,.2);background:none;color:#A9A6C4;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center"><i class="icon-plus"></i></button></sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isPlan }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:0 0 56px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 20px">
+      <div style="display:flex;flex-direction:column">
+        <span style="font:500 12px Inter;color:#A9A6C4;letter-spacing:.04em;text-transform:uppercase">Sep 28 – Oct 4</span>
+        <span style="font:700 24px/1.15 'Space Grotesk',sans-serif">Week plan</span>
+      </div>
+      <sc-if value="{{ showHeaderRecipes }}"><button onClick="{{ openRecipes }}" aria-label="Recipes" style="width:44px;height:44px;border:0;background:none;color:#F3F1FA;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center"><i class="icon-book-open"></i></button></sc-if>
+    </div>
+    <div style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:8px 0 104px;scrollbar-width:none">
+      <div style="display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 16px;scrollbar-width:none">
+        <sc-for list="{{ dayPills }}" as="d" hint-placeholder-count="7">
+          <button onClick="{{ d.pick }}" style="flex:0 0 46px;height:78px;border-radius:999px;scroll-snap-align:start;border:1.5px solid {{ d.border }};background:{{ d.bg }};color:{{ d.color }};font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0">
+            <span style="font:500 12px Inter;opacity:.85">{{ d.dow }}</span>
+            <span style="font:700 18px 'Space Grotesk',sans-serif">{{ d.dom }}</span>
+            <div style="display:flex;gap:2px"><sc-for list="{{ d.dots }}" as="x"><span style="width:4px;height:4px;border-radius:9px;background:{{ x.c }}"></span></sc-for></div>
+          </button>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:8px;padding:0 16px;flex-wrap:wrap">
+        <button onClick="{{ copyNext }}" style="height:36px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:#1A1B33;color:#F3F1FA;font:500 13px Inter;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="icon-copy"></i>Copy to next day</button>
+        <button onClick="{{ copyWeek }}" style="height:36px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:#1A1B33;color:#F3F1FA;font:500 13px Inter;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="icon-calendar-days"></i>Copy last week</button>
+        <button onClick="{{ clearDay }}" style="height:36px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:#1A1B33;color:#A9A6C4;font:500 13px Inter;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="icon-eraser"></i>Clear</button>
+      </div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;padding:8px 20px 0">
+        <span style="font:600 16px 'Space Grotesk',sans-serif">{{ planDayLabel }}</span>
+        <span style="font-size:12px;color:#A9A6C4">{{ planDayCount }} of 5 planned</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding:0 16px">
+      <sc-for list="{{ planSlots }}" as="s" hint-placeholder-count="5">
+        <div style="display:flex;align-items:center;gap:12px;background:#1A1B33;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:12px;min-height:72px;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,.25)">
+          <button onClick="{{ s.open }}" style="flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:12px;background:none;border:0;padding:0;color:inherit;text-align:left;cursor:pointer;font:inherit">
+            <div style="flex:0 0 40px;height:40px;border-radius:12px;background:#24264A;display:flex;align-items:center;justify-content:center;color:#A9A6C4;font-size:20px"><i class="{{ s.icon }}"></i></div>
+            <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px">
+              <span style="font:600 12px Inter;color:#A9A6C4;letter-spacing:.05em;text-transform:uppercase">{{ s.slotName }}</span>
+              <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                <sc-if value="{{ s.hasDot }}"><span style="flex:0 0 8px;height:8px;border-radius:99px;background:{{ s.dot }}"></span></sc-if>
+                <span style="font:500 16px Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:{{ s.titleColor }};text-decoration:{{ s.deco }}">{{ s.title }}</span>
+              </div>
+            </div>
+          </button>
+          <sc-if value="{{ s.canCook }}"><button onClick="{{ s.toggleCook }}" aria-label="Mark cooked" style="flex:0 0 44px;height:44px;border-radius:999px;border:1.5px solid {{ s.cookBorder }};background:{{ s.cookBg }};color:{{ s.cookColor }};cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center"><i class="icon-check"></i></button></sc-if>
+          <sc-if value="{{ s.isEmpty }}"><button onClick="{{ s.open }}" aria-label="Add" style="flex:0 0 44px;height:44px;border-radius:999px;border:1.5px dashed rgba(255,255,255,.2);background:none;color:#A9A6C4;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center"><i class="icon-plus"></i></button></sc-if>
+        </div>
+      </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isFridge }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:0 0 56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px">
+      <span style="font:700 24px/1.15 'Space Grotesk',sans-serif">Inventory</span>
+      <span style="font-size:12px;color:#A9A6C4">{{ itemCount }} items</span>
+    </div>
+    <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:12px;padding:4px 16px 8px">
+      <div style="display:flex;gap:8px">
+        <div style="flex:1 1 auto;position:relative;display:flex;align-items:center">
+          <i class="icon-search" style="position:absolute;left:14px;color:#A9A6C4;font-size:18px"></i>
+          <input value="{{ q }}" onChange="{{ onQ }}" placeholder="Search items" style="width:100%;height:48px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#1A1B33;color:#F3F1FA;font:16px Inter;padding:0 12px 0 42px;box-sizing:border-box;outline:none">
+        </div>
+        <button onClick="{{ toggleLow }}" style="flex:0 0 auto;height:48px;padding:0 14px;border-radius:999px;border:1.5px solid {{ lowBorder }};background:{{ lowBg }};color:{{ lowColor }};font:600 14px Inter;cursor:pointer;display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:9px;border:2px solid currentColor;background:{{ lowDot }}"></span>Low only</button>
+      </div>
+      <div style="display:flex;gap:4px;background:#1A1B33;border-radius:999px;padding:4px;border:1px solid rgba(255,255,255,.06)">
+        <sc-for list="{{ locSegs }}" as="l" hint-placeholder-count="4">
+          <button onClick="{{ l.pick }}" style="flex:1 1 0;height:40px;border-radius:999px;border:0;background:{{ l.bg }};color:{{ l.color }};font:600 13px Inter;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">{{ l.name }}<span style="font-weight:500;opacity:.7;font-size:12px">{{ l.count }}</span></button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:8px 16px 104px;scrollbar-width:none">
+      <sc-if value="{{ lowOnly }}"><span style="font-size:12px;color:#A9A6C4;padding:0 4px">Showing low and out items from every location.</span></sc-if>
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:10px;padding:0 4px"><span style="font:600 12px Inter;letter-spacing:.06em;text-transform:uppercase;color:#A9A6C4">{{ g.cat }}</span><span style="flex:1;height:1px;background:rgba(255,255,255,.06)"></span></div>
+          <div style="display:flex;flex-direction:column;background:#1A1B33;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden">
+            <sc-for list="{{ g.items }}" as="it">
+              <div style="background:{{ it.swipeBg }};border-top:1px solid rgba(255,255,255,.05)">
+                <div onPointerDown="{{ it.onDown }}" onPointerMove="{{ it.onMove }}" onPointerUp="{{ it.onUp }}" onPointerCancel="{{ it.onCancel }}" onContextMenu="{{ noMenu }}" style="display:flex;align-items:center;gap:12px;min-height:{{ rowH }};padding:0 16px;background:#1A1B33;transform:{{ it.tx }};touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:pointer">
+                  <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column">
+                    <span style="font:500 16px Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.name }}</span>
+                    <sc-if value="{{ it.showMeta }}"><span style="font-size:12px;color:#A9A6C4">{{ it.meta }}</span></sc-if>
+                  </div>
+                  <div style="flex:0 0 64px;display:flex;gap:3px">
+                    <sc-for list="{{ it.bars }}" as="b"><span style="flex:1;height:16px;border-radius:3px;background:{{ b.c }}"></span></sc-for>
+                  </div>
+                  <span style="flex:0 0 40px;font:600 12px Inter;letter-spacing:.06em;text-align:right;color:{{ it.labelColor }}">{{ it.label }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ fridgeEmpty }}">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:48px 24px;text-align:center;color:#A9A6C4">
+          <i class="icon-circle-check" style="font-size:32px;color:#3FD1A6"></i>
+          <span style="font:600 16px Inter;color:#F3F1FA">Nothing here</span>
+          <span style="font-size:14px">{{ fridgeEmptyMsg }}</span>
+        </div>
+      </sc-if>
+      <span style="font-size:12px;color:#8784A6;text-align:center;padding:4px 0">Tap to lower · Hold for levels · Swipe → Full, ← Out</span>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isShop }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:0 0 56px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 20px">
+      <div style="display:flex;flex-direction:column">
+        <span style="font:500 12px Inter;color:#A9A6C4;letter-spacing:.04em;text-transform:uppercase">Sep 28 – Oct 4</span>
+        <span style="font:700 24px/1.15 'Space Grotesk',sans-serif">Shopping</span>
+      </div>
+      <div style="display:flex">
+        <button onClick="{{ regen }}" aria-label="Regenerate" style="position:relative;width:44px;height:44px;border:0;background:none;color:#F3F1FA;cursor:pointer;font-size:21px;display:flex;align-items:center;justify-content:center"><i class="icon-refresh-cw"></i><sc-if value="{{ shopStale }}"><span style="position:absolute;top:9px;right:8px;width:8px;height:8px;border-radius:9px;background:#F2D544"></span></sc-if></button>
+        <button onClick="{{ shareList }}" aria-label="Share list" style="width:44px;height:44px;border:0;background:none;color:#F3F1FA;cursor:pointer;font-size:21px;display:flex;align-items:center;justify-content:center"><i class="icon-share-2"></i></button>
+      </div>
+    </div>
+    <div style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:8px 16px 16px;scrollbar-width:none">
+      <sc-if value="{{ shopStale }}">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 12px 12px 16px;border-radius:16px;background:rgba(242,213,68,.1);border:1px solid rgba(242,213,68,.3)">
+          <span style="flex:1;font-size:14px;line-height:1.4">Your plan changed since this list was built.</span>
+          <button onClick="{{ regen }}" style="height:36px;padding:0 14px;border-radius:999px;border:0;background:#F2D544;color:#17162B;font:600 13px Inter;cursor:pointer">Update</button>
+        </div>
+      </sc-if>
+      <sc-for list="{{ shopGroups }}" as="g" hint-placeholder-count="3">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:10px;padding:0 4px"><span style="font:600 12px Inter;letter-spacing:.06em;text-transform:uppercase;color:#A9A6C4">{{ g.cat }}</span><span style="flex:1;height:1px;background:rgba(255,255,255,.06)"></span></div>
+          <div style="display:flex;flex-direction:column;background:#1A1B33;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden">
+            <sc-for list="{{ g.rows }}" as="r">
+              <div style="display:flex;align-items:center;gap:4px;min-height:56px;padding:0 12px 0 6px;border-top:1px solid rgba(255,255,255,.05)">
+                <button onClick="{{ r.toggle }}" aria-label="Check" style="flex:0 0 44px;height:44px;border:0;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0"><span style="width:24px;height:24px;border-radius:8px;border:2px solid rgba(255,255,255,.28);box-sizing:border-box"></span></button>
+                <button onClick="{{ r.toggle }}" style="flex:1 1 auto;min-width:0;border:0;background:none;color:inherit;text-align:left;cursor:pointer;padding:6px 0;display:flex;flex-direction:column;gap:2px;font:inherit">
+                  <span style="font:500 16px Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+                  <sc-if value="{{ r.short }}"><span style="font-size:12px;color:#F0BE4E">May run short · Med, 3+ planned uses</span></sc-if>
+                </button>
+                <button onClick="{{ r.onBadge }}" style="flex:0 0 auto;height:28px;padding:0 10px;border-radius:999px;border:0;background:{{ r.badgeBg }};color:{{ r.badgeColor }};font:600 12px Inter;cursor:pointer;display:flex;align-items:center;gap:4px">{{ r.badge }}</button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ shopEmpty }}">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:48px 24px;text-align:center;color:#A9A6C4">
+          <i class="icon-shopping-cart" style="font-size:32px;color:#3FD1A6"></i>
+          <span style="font:600 16px Inter;color:#F3F1FA">Nothing left to buy</span>
+          <span style="font-size:14px">Everything your plan needs is in stock.</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{ hasCart }}">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button onClick="{{ toggleCart }}" style="display:flex;align-items:center;gap:10px;padding:8px 4px;border:0;background:none;color:#A9A6C4;cursor:pointer;font:inherit"><span style="font:600 12px Inter;letter-spacing:.06em;text-transform:uppercase">In cart ({{ cartCount }})</span><span style="flex:1;height:1px;background:rgba(255,255,255,.06)"></span><i class="{{ cartChevron }}"></i></button>
+          <sc-if value="{{ cartOpen }}">
+            <div style="display:flex;flex-direction:column;background:#1A1B33;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden;opacity:.75">
+              <sc-for list="{{ cartRows }}" as="r">
+                <div style="display:flex;align-items:center;gap:4px;min-height:52px;padding:0 12px 0 6px;border-top:1px solid rgba(255,255,255,.05)">
+                  <button onClick="{{ r.toggle }}" aria-label="Uncheck" style="flex:0 0 44px;height:44px;border:0;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0"><span style="width:24px;height:24px;border-radius:8px;background:#0F9D76;color:#0F1020;display:flex;align-items:center;justify-content:center;font-size:16px"><i class="icon-check"></i></span></button>
+                  <span style="flex:1;font:500 16px Inter;text-decoration:line-through;color:#A9A6C4">{{ r.name }}</span>
+                  <span style="font-size:12px;color:#3FD1A6">{{ r.note }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+      <div style="flex:0 0 72px"></div>
+    </div>
+    <sc-if value="{{ hasCart }}">
+      <div style="position:absolute;left:16px;right:16px;bottom:96px;z-index:5">
+        <button onClick="{{ finishTrip }}" style="width:100%;height:56px;border-radius:16px;border:0;background:#0F9D76;color:#0F1020;font:600 16px Inter;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;gap:8px"><i class="icon-circle-check"></i>Finish trip · {{ cartCount }} in cart</button>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <sc-if value="{{ isRecipes }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:0 0 56px;display:flex;align-items:center;gap:4px;padding:0 20px 0 4px">
+      <sc-if value="{{ showRecipesBack }}"><button onClick="{{ back }}" aria-label="Back" style="width:44px;height:44px;border:0;background:none;color:#F3F1FA;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center"><i class="icon-chevron-left"></i></button></sc-if>
+      <span style="font:700 24px/1.15 'Space Grotesk',sans-serif;padding-left:12px">Recipes</span>
+    </div>
+    <div style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:4px 16px 104px;scrollbar-width:none">
+      <div style="position:relative;display:flex;align-items:center">
+        <i class="icon-search" style="position:absolute;left:14px;color:#A9A6C4;font-size:18px"></i>
+        <input value="{{ recQ }}" onChange="{{ onRecQ }}" placeholder="Search recipes" style="width:100%;height:48px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#1A1B33;color:#F3F1FA;font:16px Inter;padding:0 12px 0 42px;box-sizing:border-box;outline:none">
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <sc-for list="{{ recChips }}" as="c" hint-placeholder-count="5">
+          <button onClick="{{ c.pick }}" style="height:36px;padding:0 14px;border-radius:999px;border:1.5px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};font:600 13px Inter;cursor:pointer">{{ c.name }}</button>
+        </sc-for>
+      </div>
+      <sc-for list="{{ recCards }}" as="r" hint-placeholder-count="4">
+        <div style="display:flex;align-items:center;gap:8px;background:#1A1B33;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px 6px 14px 16px;box-shadow:0 2px 10px rgba(0,0,0,.25)">
+          <button onClick="{{ r.open }}" style="flex:1 1 auto;min-width:0;border:0;background:none;color:inherit;text-align:left;cursor:pointer;padding:0;font:inherit;display:flex;flex-direction:column;gap:6px">
+            <span style="font:600 17px 'Space Grotesk',sans-serif">{{ r.name }}</span>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#A9A6C4;flex-wrap:wrap">
+              <span style="color:#C9A4F5">{{ r.tags }}</span>
+              <span style="display:flex;align-items:center;gap:4px"><i class="icon-clock"></i>{{ r.prep }}</span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:9px;background:{{ r.dot }}"></span>{{ r.stock }}</span>
+            </div>
+          </button>
+          <button onClick="{{ r.toggleFav }}" aria-label="Favorite" style="flex:0 0 44px;height:44px;border:0;background:none;color:{{ r.heart }};cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center"><i class="icon-heart"></i></button>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isRecipe }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:0 0 56px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 4px">
+      <button onClick="{{ back }}" aria-label="Back" style="width:44px;height:44px;border:0;background:none;color:#F3F1FA;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center"><i class="icon-chevron-left"></i></button>
+      <button onClick="{{ rdFav }}" aria-label="Favorite" style="width:44px;height:44px;border:0;background:none;color:{{ rdHeart }};cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center"><i class="icon-heart"></i></button>
+    </div>
+    <div style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:20px;padding:0 16px 180px;scrollbar-width:none">
+      <div style="display:flex;flex-direction:column;gap:10px;padding:0 4px">
+        <span style="font:700 32px/1.1 'Space Grotesk',sans-serif;letter-spacing:-.01em;text-wrap:balance">{{ rdName }}</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span style="height:28px;padding:0 12px;border-radius:999px;background:rgba(139,63,217,.22);color:#C9A4F5;font:600 12px Inter;display:flex;align-items:center">{{ rdTags }}</span>
+          <span style="height:28px;padding:0 12px;border-radius:999px;background:#24264A;color:#A9A6C4;font:500 12px Inter;display:flex;align-items:center;gap:5px"><i class="icon-clock"></i>{{ rdPrep }}</span>
+          <span style="height:28px;padding:0 12px;border-radius:999px;background:#24264A;color:#A9A6C4;font:500 12px Inter;display:flex;align-items:center">{{ rdServ }}</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 4px"><span style="font:600 16px 'Space Grotesk',sans-serif">Ingredients</span><span style="font-size:12px;color:{{ rdStockColor }}">{{ rdStock }}</span></div>
+        <div style="display:flex;flex-direction:column;background:#1A1B33;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden">
+          <sc-for list="{{ rdIngs }}" as="g" hint-placeholder-count="4">
+            <button onClick="{{ g.open }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 16px;border:0;border-top:1px solid rgba(255,255,255,.05);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer">
+              <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column"><span style="font:500 16px Inter">{{ g.name }}</span><span style="font-size:12px;color:#A9A6C4">{{ g.qty }}</span></div>
+              <div style="flex:0 0 48px;display:flex;gap:3px"><sc-for list="{{ g.bars }}" as="b"><span style="flex:1;height:12px;border-radius:3px;background:{{ b.c }}"></span></sc-for></div>
+              <span style="flex:0 0 40px;font:600 12px Inter;letter-spacing:.06em;text-align:right;color:{{ g.labelColor }}">{{ g.label }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <span style="font:600 16px 'Space Grotesk',sans-serif;padding:0 4px">Steps</span>
+        <sc-for list="{{ rdSteps }}" as="st" hint-placeholder-count="3">
+          <div style="display:flex;gap:12px;padding:0 4px">
+            <span style="flex:0 0 28px;height:28px;border-radius:999px;background:#24264A;color:#C9A4F5;font:600 13px 'Space Grotesk',sans-serif;display:flex;align-items:center;justify-content:center">{{ st.n }}</span>
+            <span style="flex:1;font-size:16px;line-height:1.5;color:#DAD7EA;text-wrap:pretty">{{ st.text }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="position:absolute;left:16px;right:16px;bottom:96px;z-index:5">
+      <button onClick="{{ openAddPlan }}" style="width:100%;height:56px;border-radius:16px;border:0;background:#0F9D76;color:#0F1020;font:600 16px Inter;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;gap:8px"><i class="icon-calendar-days"></i>Add to plan</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:0 0 56px;display:flex;align-items:center;gap:4px;padding:0 20px 0 4px">
+      <button onClick="{{ back }}" aria-label="Back" style="width:44px;height:44px;border:0;background:none;color:#F3F1FA;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center"><i class="icon-chevron-left"></i></button>
+      <span style="font:700 24px/1.15 'Space Grotesk',sans-serif">Settings</span>
+    </div>
+    <div style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:8px 16px 104px;scrollbar-width:none">
+      <sc-if value="{{ backupDue }}">
+        <div style="display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:16px;background:rgba(227,162,26,.12);border:1px solid rgba(227,162,26,.35)">
+          <div style="display:flex;gap:10px"><i class="icon-triangle-alert" style="color:#F0BE4E;font-size:18px;padding-top:1px"></i><div style="display:flex;flex-direction:column;gap:2px"><span style="font:600 16px Inter">Last backup 16 days ago</span><span style="font-size:14px;color:#A9A6C4;line-height:1.4">Your data lives only on this phone. Clearing browser data erases it.</span></div></div>
+          <button onClick="{{ backupNow }}" style="height:44px;border-radius:12px;border:0;background:#E3A21A;color:#17162B;font:600 15px Inter;cursor:pointer">Back up now</button>
+        </div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;background:#1A1B33;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 12px 0 16px">
+          <span style="flex:1;font:500 16px Inter">Theme</span>
+          <div style="display:flex;gap:2px;background:#24264A;border-radius:999px;padding:3px"><sc-for list="{{ themeSeg }}" as="t"><button onClick="{{ t.pick }}" style="height:32px;padding:0 12px;border-radius:999px;border:0;background:{{ t.bg }};color:{{ t.color }};font:600 13px Inter;cursor:pointer">{{ t.name }}</button></sc-for></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 12px 0 16px;border-top:1px solid rgba(255,255,255,.05)">
+          <span style="flex:1;font:500 16px Inter">Week starts on</span>
+          <div style="display:flex;gap:2px;background:#24264A;border-radius:999px;padding:3px"><sc-for list="{{ weekSeg }}" as="t"><button onClick="{{ t.pick }}" style="height:32px;padding:0 12px;border-radius:999px;border:0;background:{{ t.bg }};color:{{ t.color }};font:600 13px Inter;cursor:pointer">{{ t.name }}</button></sc-for></div>
+        </div>
+        <button onClick="{{ toggleCookDec }}" style="display:flex;align-items:center;gap:12px;min-height:64px;padding:8px 12px 8px 16px;border:0;border-top:1px solid rgba(255,255,255,.05);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer">
+          <span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font:500 16px Inter">Cooking lowers inventory</span><span style="font-size:13px;color:#A9A6C4">Marking a meal cooked steps its ingredients down</span></span>
+          <span style="flex:0 0 51px;height:31px;border-radius:999px;background:{{ cookTrack }};position:relative"><span style="position:absolute;top:3px;left:3px;width:25px;height:25px;border-radius:99px;background:#F3F1FA;transform:{{ cookKnob }};transition:transform .18s ease-out"></span></span>
+        </button>
+      </div>
+      <div style="display:flex;flex-direction:column;background:#1A1B33;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden">
+        <button onClick="{{ backupNow }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 16px;border:0;background:none;color:inherit;font:500 16px Inter;text-align:left;cursor:pointer"><i class="icon-download" style="color:#A9A6C4;font-size:18px"></i><span style="flex:1">Back up now</span><span style="font-size:13px;color:#A9A6C4">{{ lastBackup }}</span></button>
+        <button onClick="{{ restore }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 16px;border:0;border-top:1px solid rgba(255,255,255,.05);background:none;color:inherit;font:500 16px Inter;text-align:left;cursor:pointer"><i class="icon-upload" style="color:#A9A6C4;font-size:18px"></i><span style="flex:1">Restore from file</span><i class="icon-chevron-right" style="color:#A9A6C4"></i></button>
+        <div style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 16px;border-top:1px solid rgba(255,255,255,.05)"><i class="icon-shield-check" style="color:#3FD1A6;font-size:18px"></i><span style="flex:1;font:500 16px Inter">Storage</span><span style="font-size:13px;color:#3FD1A6">Persistent ✓</span></div>
+        <button onClick="{{ starterPack }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 16px;border:0;border-top:1px solid rgba(255,255,255,.05);background:none;color:inherit;font:500 16px Inter;text-align:left;cursor:pointer"><i class="icon-package" style="color:#A9A6C4;font-size:18px"></i><span style="flex:1">Load starter pack</span><i class="icon-chevron-right" style="color:#A9A6C4"></i></button>
+      </div>
+      <div style="display:flex;flex-direction:column;background:#1A1B33;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden">
+        <button onClick="{{ resetAll }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 16px;border:0;background:none;color:#FF7A95;font:500 16px Inter;text-align:left;cursor:pointer"><i class="icon-trash-2" style="font-size:18px"></i><span style="flex:1">{{ resetLabel }}</span></button>
+      </div>
+      <span style="font-size:12px;color:#8784A6;text-align:center">Fridge Follower 1.0.0 · All data stays on this device</span>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showFab }}">
+    <button onClick="{{ openAdd }}" aria-label="Quick add" style="position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:18px;border:0;background:#0F9D76;color:#0F1020;font-size:26px;cursor:pointer;box-shadow:0 10px 28px rgba(15,157,118,.35),0 4px 10px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:6"><i class="icon-plus"></i></button>
+  </sc-if>
+
+  <div style="flex:0 0 auto;display:flex;justify-content:space-around;padding:6px 8px 26px;background:#0F1020;border-top:1px solid rgba(255,255,255,.06);position:relative;z-index:4">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+      <button onClick="{{ t.go }}" style="flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:56px;justify-content:center;border:0;background:none;color:{{ t.color }};font:600 11px Inter;cursor:pointer;position:relative">
+        <span style="width:56px;height:30px;border-radius:999px;background:{{ t.pill }};display:flex;align-items:center;justify-content:center;font-size:21px"><i class="{{ t.icon }}"></i></span>
+        {{ t.name }}
+        <sc-if value="{{ t.hasBadge }}"><span style="position:absolute;top:3px;left:calc(50% + 8px);min-width:18px;height:18px;border-radius:999px;background:#D6264F;color:#fff;font:600 11px Inter;display:flex;align-items:center;justify-content:center;padding:0 5px;box-sizing:border-box">{{ t.badge }}</span></sc-if>
+      </button>
+    </sc-for>
+    <span style="position:absolute;bottom:8px;left:50%;margin-left:-67px;width:134px;height:5px;border-radius:9px;background:rgba(255,255,255,.4)"></span>
+  </div>
+
+  <sc-if value="{{ toastOn }}">
+    <div style="position:absolute;left:16px;right:16px;bottom:164px;z-index:30;display:flex;align-items:center;gap:12px;padding:0 8px 0 16px;min-height:52px;border-radius:14px;background:#F3F1FA;color:#17162B;box-shadow:0 12px 30px rgba(0,0,0,.45)">
+      <span style="flex:1;font:500 14px Inter">{{ toastMsg }}</span>
+      <sc-if value="{{ toastHasUndo }}"><button onClick="{{ undo }}" style="height:40px;padding:0 12px;border:0;border-radius:10px;background:none;color:#2447B8;font:700 14px Inter;cursor:pointer">Undo</button></sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ sheetOpen }}">
+    <div style="position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:flex-end">
+      <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:rgba(5,5,15,.62)"></div>
+      <div style="position:relative;max-height:85%;display:flex;flex-direction:column;background:#24264A;border-radius:28px 28px 0 0;border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -10px 40px rgba(0,0,0,.4);padding-bottom:28px">
+        <div style="flex:0 0 auto;display:flex;justify-content:center;padding:10px 0 4px"><span style="width:40px;height:5px;border-radius:9px;background:rgba(255,255,255,.2)"></span></div>
+
+        <sc-if value="{{ isSlotSheet }}">
+          <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:12px;padding:4px 16px 12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px"><span style="font:700 20px 'Space Grotesk',sans-serif">{{ sheetTitle }}</span><sc-if value="{{ hasEntry }}"><button onClick="{{ clearSlot }}" style="height:36px;padding:0 12px;border-radius:999px;border:0;background:rgba(214,38,79,.18);color:#FF7A95;font:600 13px Inter;cursor:pointer">Clear slot</button></sc-if></div>
+            <div style="position:relative;display:flex;align-items:center">
+              <i class="icon-search" style="position:absolute;left:14px;color:#A9A6C4;font-size:18px"></i>
+              <input autoFocus="{{ true }}" value="{{ pickQ }}" onChange="{{ onPickQ }}" placeholder="Search recipes" style="width:100%;height:48px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#1A1B33;color:#F3F1FA;font:16px Inter;padding:0 12px 0 42px;box-sizing:border-box;outline:none">
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ pickChips }}" as="c"><button onClick="{{ c.pick }}" style="height:34px;padding:0 14px;border-radius:999px;border:1.5px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};font:600 13px Inter;cursor:pointer">{{ c.name }}</button></sc-for>
+            </div>
+          </div>
+          <div style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:0 16px 12px;min-height:0;scrollbar-width:none">
+            <sc-for list="{{ pickResults }}" as="r">
+              <button onClick="{{ r.pick }}" style="display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 14px;border-radius:14px;border:1.5px solid {{ r.border }};background:#1A1B33;color:inherit;font:inherit;text-align:left;cursor:pointer">
+                <span style="flex:0 0 10px;height:10px;border-radius:9px;background:{{ r.dot }}"></span>
+                <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font:500 16px Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span><span style="font-size:12px;color:#A9A6C4">{{ r.meta }}</span></span>
+                <sc-if value="{{ r.fav }}"><i class="icon-heart" style="color:#FF7A95"></i></sc-if>
+              </button>
+            </sc-for>
+            <sc-if value="{{ pickNone }}"><span style="padding:16px;text-align:center;color:#A9A6C4;font-size:14px">No recipes match. Use free text below.</span></sc-if>
+          </div>
+          <div style="flex:0 0 auto;display:flex;gap:8px;padding:12px 16px 0;border-top:1px solid rgba(255,255,255,.06)">
+            <input value="{{ freeText }}" onChange="{{ onFreeText }}" placeholder="Free text… Leftovers, Eat out" style="flex:1;min-width:0;height:48px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#1A1B33;color:#F3F1FA;font:16px Inter;padding:0 14px;box-sizing:border-box;outline:none">
+            <button onClick="{{ saveFree }}" style="flex:0 0 auto;height:48px;padding:0 18px;border-radius:12px;border:0;background:#2E5BDB;color:#fff;font:600 15px Inter;cursor:pointer">Save</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isLevelSheet }}">
+          <div style="display:flex;flex-direction:column;gap:16px;padding:4px 16px 0">
+            <div style="display:flex;flex-direction:column;gap:2px;padding:0 4px"><span style="font:700 20px 'Space Grotesk',sans-serif">{{ lvName }}</span><span style="font-size:13px;color:#A9A6C4">{{ lvMeta }}</span></div>
+            <div style="display:flex;gap:6px">
+              <sc-for list="{{ lvOpts }}" as="o">
+                <button onClick="{{ o.pick }}" style="flex:1 1 0;height:92px;border-radius:16px;border:2px solid {{ o.border }};background:{{ o.bg }};color:{{ o.color }};font:600 12px Inter;letter-spacing:.06em;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0">
+                  <span style="display:flex;gap:2px;width:36px"><sc-for list="{{ o.bars }}" as="b"><span style="flex:1;height:18px;border-radius:2px;background:{{ b.c }}"></span></sc-for></span>
+                  {{ o.label }}
+                </button>
+              </sc-for>
+            </div>
+            <button onClick="{{ toggleStaple }}" style="display:flex;align-items:center;gap:12px;min-height:64px;padding:8px 12px 8px 16px;border-radius:16px;border:0;background:#1A1B33;color:inherit;font:inherit;text-align:left;cursor:pointer">
+              <span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font:500 16px Inter">Staple</span><span style="font-size:13px;color:#A9A6C4">Add to the list automatically when low</span></span>
+              <span style="flex:0 0 51px;height:31px;border-radius:999px;background:{{ stapleTrack }};position:relative"><span style="position:absolute;top:3px;left:3px;width:25px;height:25px;border-radius:99px;background:#F3F1FA;transform:{{ stapleKnob }};transition:transform .18s ease-out"></span></span>
+            </button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isAddSheet }}">
+          <div style="display:flex;flex-direction:column;gap:14px;padding:4px 16px 0">
+            <span style="font:700 20px 'Space Grotesk',sans-serif;padding:0 4px">{{ addTitle }}</span>
+            <input autoFocus="{{ true }}" value="{{ addName }}" onChange="{{ onAddName }}" onKeyDown="{{ onAddKey }}" placeholder="{{ addPlaceholder }}" style="width:100%;height:52px;border-radius:12px;border:1.5px solid {{ addBorder }};background:#1A1B33;color:#F3F1FA;font:16px Inter;padding:0 14px;box-sizing:border-box;outline:none">
+            <sc-if value="{{ addDup }}"><span style="font-size:13px;color:#FF7A95;padding:0 4px;margin-top:-6px">{{ addDupMsg }}</span></sc-if>
+            <sc-if value="{{ addIsInv }}">
+              <div style="display:flex;gap:8px">
+                <sc-for list="{{ addLocs }}" as="l"><button onClick="{{ l.pick }}" style="flex:1 1 0;height:40px;border-radius:999px;border:1.5px solid {{ l.border }};background:{{ l.bg }};color:{{ l.color }};font:600 13px Inter;cursor:pointer">{{ l.name }}</button></sc-for>
+              </div>
+            </sc-if>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px;font-size:13px;color:#A9A6C4"><span>Category</span><span style="color:#F3F1FA">{{ addCat }} <span style="color:#8784A6">· auto</span></span></div>
+            <button onClick="{{ doAdd }}" style="height:52px;border-radius:14px;border:0;background:#0F9D76;color:#0F1020;font:600 16px Inter;cursor:pointer;opacity:{{ addOpacity }}">{{ addCta }}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isAddPlanSheet }}">
+          <div style="display:flex;flex-direction:column;gap:14px;padding:4px 0 0">
+            <span style="font:700 20px 'Space Grotesk',sans-serif;padding:0 20px">Add {{ apName }}</span>
+            <div style="display:flex;gap:8px;overflow-x:auto;padding:0 16px;scrollbar-width:none">
+              <sc-for list="{{ apDays }}" as="d"><button onClick="{{ d.pick }}" style="flex:0 0 46px;height:64px;border-radius:999px;border:1.5px solid {{ d.border }};background:{{ d.bg }};color:{{ d.color }};font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0"><span style="font:500 12px Inter">{{ d.dow }}</span><span style="font:700 17px 'Space Grotesk',sans-serif">{{ d.dom }}</span></button></sc-for>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;padding:0 16px">
+              <sc-for list="{{ apSlots }}" as="c"><button onClick="{{ c.pick }}" style="height:40px;padding:0 14px;border-radius:999px;border:1.5px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};font:600 13px Inter;cursor:pointer">{{ c.name }}</button></sc-for>
+            </div>
+            <sc-if value="{{ apReplaces }}"><span style="font-size:13px;color:#F0BE4E;padding:0 20px">Replaces {{ apReplaceName }}</span></sc-if>
+            <div style="padding:0 16px"><button onClick="{{ doAddPlan }}" style="width:100%;height:52px;border-radius:14px;border:0;background:#0F9D76;color:#0F1020;font:600 16px Inter;cursor:pointer">{{ apCta }}</button></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isReasonSheet }}">
+          <div style="display:flex;flex-direction:column;gap:12px;padding:4px 16px 0">
+            <div style="display:flex;flex-direction:column;gap:2px;padding:0 4px"><span style="font:700 20px 'Space Grotesk',sans-serif">{{ rsName }}</span><span style="font-size:13px;color:#A9A6C4">{{ rsLine }}</span></div>
+            <span style="font:600 12px Inter;letter-spacing:.06em;text-transform:uppercase;color:#A9A6C4;padding:4px 4px 0">Needed for</span>
+            <div style="display:flex;flex-direction:column;background:#1A1B33;border-radius:16px;overflow:hidden">
+              <sc-for list="{{ rsRecipes }}" as="r"><button onClick="{{ r.open }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 16px;border:0;border-top:1px solid rgba(255,255,255,.05);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer"><span style="flex:1;display:flex;flex-direction:column"><span style="font:500 16px Inter">{{ r.name }}</span><span style="font-size:12px;color:#A9A6C4">{{ r.when }}</span></span><i class="icon-chevron-right" style="color:#A9A6C4"></i></button></sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;tabs&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;4 tabs&quot;,&quot;5 tabs&quot;],&quot;default&quot;:&quot;4 tabs&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Comfortable&quot;,&quot;Compact&quot;],&quot;default&quot;:&quot;Comfortable&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const LVR={out:0,low:1,med:2,high:3,full:4};
+const LVO=['full','high','med','low','out'];
+const LVC={full:'#0F9D76',high:'#2E5BDB',med:'#E3A21A',low:'#D6264F',out:'#D6264F'};
+const LVT={full:'#3FD1A6',high:'#9DB4FF',med:'#F0BE4E',low:'#FF7A95',out:'#FF7A95'};
+const LVN={full:'Full',high:'High',med:'Med',low:'Low',out:'Out'};
+const SLOTS=[{k:'breakfast',n:'Breakfast',i:'coffee'},{k:'snack1',n:'Snack 1',i:'apple'},{k:'lunch',n:'Lunch',i:'sandwich'},{k:'snack2',n:'Snack 2',i:'cookie'},{k:'dinner',n:'Dinner',i:'utensils'}];
+const SLOTN={breakfast:'Breakfast',snack1:'Snack',snack2:'Snack',lunch:'Lunch',dinner:'Dinner'};
+const DAYS=[['2026-09-28','Mon',28,'Sep'],['2026-09-29','Tue',29,'Sep'],['2026-09-30','Wed',30,'Sep'],['2026-10-01','Thu',1,'Oct'],['2026-10-02','Fri',2,'Oct'],['2026-10-03','Sat',3,'Oct'],['2026-10-04','Sun',4,'Oct']].map(([key,dow,dom,mon])=>({key,dow,dom,mon,label:dow+', '+mon+' '+dom}));
+const TODAY='2026-09-30';
+const LOCS=[{k:'fridge',n:'Fridge'},{k:'freezer',n:'Freezer'},{k:'pantry',n:'Pantry'},{k:'spice',n:'Spices'}];
+const CATS=['Produce','Dairy','Deli','Meat','Seafood','Bakery','Grains','Canned','Spreads','Frozen','Spices','Household','Other'];
+const KW={yogurt:'Dairy',milk:'Dairy',chees:'Dairy',butter:'Dairy',cream:'Dairy',egg:'Dairy',apple:'Produce',banana:'Produce',lettuce:'Produce',spinach:'Produce',tomato:'Produce',onion:'Produce',garlic:'Produce',lemon:'Produce',carrot:'Produce',avocado:'Produce',berr:'Frozen',chicken:'Meat',beef:'Meat',turkey:'Meat',salmon:'Seafood',fish:'Seafood',shrimp:'Seafood',bread:'Bakery',tortilla:'Bakery',bagel:'Bakery',rice:'Grains',pasta:'Grains',oat:'Grains',flour:'Grains',bean:'Canned',chickpea:'Canned',soup:'Canned',salt:'Spices',pepper:'Spices',cumin:'Spices',paprika:'Spices',cinnamon:'Spices',ice:'Frozen',frozen:'Frozen',peas:'Frozen',peanut:'Spreads',jam:'Spreads',honey:'Spreads',hummus:'Deli',ham:'Deli',candle:'Household',soap:'Household',foil:'Household'};
+const guessCat=n=>{n=n.toLowerCase();for(const k in KW) if(n.includes(k)) return KW[k];return 'Other';};
+const I=(id,name,loc,cat,level,staple,unit)=>({id,name,loc,cat,level,staple:!!staple,unit:unit||''});
+const ITEMS=[
+I('milk','Milk','fridge','Dairy','high',1,'2 L jug'),I('yogurt','Greek yogurt','fridge','Dairy','low',1,'tub'),I('eggs','Eggs','fridge','Dairy','med',1,'dozen'),I('cheddar','Cheddar','fridge','Dairy','full',0,'block'),I('butter','Butter','fridge','Dairy','med',0,''),
+I('spinach','Baby spinach','fridge','Produce','low',0,'bag'),I('apples','Apples','fridge','Produce','high',1,''),I('avocado','Avocados','fridge','Produce','out',0,''),I('lemons','Lemons','fridge','Produce','med',0,''),
+I('chicken','Chicken thighs','fridge','Meat','med',0,'pack'),I('hummus','Hummus','fridge','Deli','med',0,'tub'),
+I('salmon','Salmon fillets','freezer','Seafood','full',0,''),I('peas','Frozen peas','freezer','Frozen','high',0,'bag'),I('berries','Mixed berries','freezer','Frozen','low',0,'bag'),
+I('oats','Rolled oats','pantry','Grains','full',1,''),I('rice','Basmati rice','pantry','Grains','high',1,''),I('pasta','Spaghetti','pantry','Grains','out',0,''),I('tortillas','Tortillas','pantry','Bakery','med',0,'pack'),I('bread','Sourdough','pantry','Bakery','low',1,'loaf'),I('pb','Peanut butter','pantry','Spreads','high',0,'jar'),I('chickpeas','Chickpeas','pantry','Canned','full',0,'2 cans'),
+I('cumin','Cumin','spice','Spices','high',0,''),I('paprika','Smoked paprika','spice','Spices','low',0,''),I('cinnamon','Cinnamon','spice','Spices','full',0,'')];
+const R=(id,name,slots,prep,serv,fav,ings,steps)=>({id,name,slots,prep,serv,fav,ings,steps});
+const RECIPES=[
+R('r1','Overnight oats',['breakfast'],5,1,true,[['oats','½ cup','one-level'],['milk','½ cup','one-level'],['yogurt','¼ cup','one-level'],['berries','handful','one-level']],['Stir oats, milk and yogurt together in a jar.','Top with berries, cover, and refrigerate overnight.','Eat cold or warm for 60 seconds.']),
+R('r2','Spinach omelette',['breakfast'],10,1,false,[['eggs','3','one-level'],['spinach','1 cup','one-level'],['cheddar','¼ cup grated','none'],['butter','1 tsp','none']],['Whisk eggs with a pinch of salt.','Wilt spinach in butter, pour in eggs.','Add cheddar, fold, and serve.']),
+R('r3','Avocado toast',['breakfast','lunch'],8,1,false,[['bread','2 slices','one-level'],['avocado','1','depletes'],['eggs','1','one-level'],['lemons','squeeze','none']],['Toast the bread.','Mash avocado with lemon and salt.','Spread, top with a fried egg.']),
+R('r4','Apple + PB',['snack1','snack2'],2,1,true,[['apples','1','one-level'],['pb','2 tbsp','none']],['Slice the apple and dip.']),
+R('r5','Yogurt & berries',['snack1','snack2'],3,1,false,[['yogurt','¾ cup','one-level'],['berries','½ cup','one-level']],['Spoon yogurt into a bowl and top with berries.']),
+R('r6','Hummus toast',['snack1','snack2'],4,1,false,[['bread','1 slice','none'],['hummus','3 tbsp','one-level'],['paprika','pinch','none']],['Toast, spread hummus, dust with paprika.']),
+R('r7','Chicken wrap',['lunch'],15,2,true,[['chicken','2 thighs','one-level'],['tortillas','2','one-level'],['spinach','1 cup','one-level'],['cheddar','⅓ cup','none'],['paprika','1 tsp','none']],['Season chicken with paprika and pan-fry 6 min a side.','Slice and layer on tortillas with spinach and cheddar.','Roll tightly and toast seam-side down.']),
+R('r8','Chickpea curry',['lunch','dinner'],30,4,false,[['chickpeas','2 cans','depletes'],['rice','1½ cups','one-level'],['spinach','2 cups','one-level'],['cumin','2 tsp','none'],['paprika','1 tsp','none']],['Start the rice.','Toast cumin and paprika in oil, add drained chickpeas and a splash of water.','Simmer 15 min, stir in spinach until wilted.','Serve over rice.']),
+R('r9','Salmon bowl',['dinner'],25,2,true,[['salmon','2 fillets','depletes'],['rice','1 cup','one-level'],['avocado','1','depletes'],['lemons','½','one-level']],['Cook rice.','Roast salmon at 220°C for 12 min.','Build bowls with rice, flaked salmon, sliced avocado and lemon.']),
+R('r10','Lemon pasta with peas',['dinner'],20,3,false,[['pasta','300 g','depletes'],['peas','1 cup','one-level'],['lemons','1','one-level'],['butter','2 tbsp','one-level'],['cheddar','½ cup','none']],['Boil pasta, adding peas for the last 2 min.','Toss with butter, lemon zest and juice, and cheese.','Loosen with pasta water.'])];
+const rById=id=>RECIPES.find(r=>r.id===id);
+const P=(rid,cooked)=>({recipeId:rid,name:rById(rid).name,cooked:!!cooked});
+const F=t=>({freeText:t,name:t,cooked:false});
+const PLAN0={
+'2026-09-28|breakfast':P('r1',1),'2026-09-28|snack1':P('r4',1),'2026-09-28|lunch':P('r7',1),'2026-09-28|snack2':P('r5',1),'2026-09-28|dinner':P('r9',1),
+'2026-09-29|breakfast':P('r2',1),'2026-09-29|snack1':P('r4',1),'2026-09-29|lunch':F('Leftovers'),'2026-09-29|snack2':P('r6',1),'2026-09-29|dinner':P('r8',1),
+'2026-09-30|breakfast':P('r1',1),'2026-09-30|lunch':P('r7'),'2026-09-30|snack2':P('r4'),'2026-09-30|dinner':P('r9'),
+'2026-10-01|breakfast':P('r3'),'2026-10-01|snack1':P('r5'),'2026-10-01|lunch':P('r8'),'2026-10-01|snack2':P('r4'),'2026-10-01|dinner':P('r10'),
+'2026-10-02|breakfast':P('r1'),'2026-10-02|lunch':P('r7'),'2026-10-02|dinner':F('Eat out'),
+'2026-10-03|breakfast':P('r2'),'2026-10-03|dinner':P('r8')};
+const LASTWEEK=['r1','r4','r7','r5','r9'];
+
+function gen(items,plan,recipes,prev){
+  const byId={};items.forEach(i=>byId[i.id]=i);
+  const need={};
+  Object.values(plan).forEach(e=>{if(!e||!e.recipeId||e.cooked)return;const r=recipes.find(x=>x.id===e.recipeId);if(!r)return;
+    r.ings.forEach(([iid])=>{const n=need[iid]||(need[iid]={n:0,rs:[]});n.n++;if(!n.rs.includes(r.id))n.rs.push(r.id);});});
+  const prevBy={};prev.forEach(p=>{if(p.itemId)prevBy[p.itemId]=p;});
+  const out=[];
+  const push=(it,source,rs,short)=>{const p=prevBy[it.id];out.push({id:'s-'+it.id,itemId:it.id,name:it.name,cat:it.cat,source,rs:rs||[],short:!!short,checked:p?p.checked:false,prevLevel:p?p.prevLevel:null});};
+  Object.entries(need).forEach(([iid,n])=>{const it=byId[iid];if(!it)return;if(LVR[it.level]<=1)push(it,'plan',n.rs);else if(it.level==='med'&&n.n>=3)push(it,'plan',n.rs,true);});
+  items.forEach(it=>{if(it.staple&&LVR[it.level]<=1&&!out.find(o=>o.itemId===it.id))push(it,'staple');});
+  prev.forEach(p=>{if(p.checked&&p.itemId&&!out.find(o=>o.itemId===p.itemId))out.push(p);});
+  prev.filter(p=>p.source==='manual').forEach(p=>out.push(p));
+  return out;
+}
+const bars=(lvl,off)=>[1,2,3,4].map(i=>({c:i<=LVR[lvl]?LVC[lvl]:(off||'rgba(255,255,255,.12)')}));
+
+class Component extends DCLogic {
+  state=(()=>{const items=ITEMS.map(i=>({...i}));const plan={...PLAN0};const recipes=RECIPES.map(r=>({...r}));
+    const shop=gen(items,plan,recipes,[{id:'m1',name:'Birthday candles',cat:'Household',source:'manual',rs:[],checked:false}]);
+    return {items,plan,recipes,shop,tab:'today',prevTab:'today',recipeId:null,day:TODAY,loc:'fridge',q:'',lowOnly:false,sheet:null,pickQ:'',pickFilter:'suited',freeText:'',addName:'',addLoc:'fridge',recQ:'',recSlot:'all',toast:null,cartOpen:true,cookDec:true,theme:'Dark',week:'Mon',shopStale:false,drag:null,backedUp:false,resetArm:false,apDay:null,apSlot:null};})();
+
+  componentWillUnmount(){clearTimeout(this._tt);clearTimeout(this._lp);}
+  toast(msg,undo){clearTimeout(this._tt);this.setState({toast:{msg,undo}});this._tt=setTimeout(()=>this.setState({toast:null}),5000);}
+  vib(){try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}}
+  item(id){return this.state.items.find(i=>i.id===id);}
+  setLevel(id,lvl,msg){const prev=this.state.items;const it=this.item(id);if(!it||it.level===lvl){if(it)this.toast(it.name+' is already '+LVN[lvl]);return;}
+    this.vib();this.setState({items:prev.map(i=>i.id===id?{...i,level:lvl}:i)});
+    this.toast(msg||(it.name+' → '+LVN[lvl]),()=>this.setState({items:prev}));}
+  stepDown(id){const it=this.item(id);if(!it)return;if(it.level==='out'){this.toast(it.name+' is out · hold to change');return;}this.setLevel(id,LVO[LVO.indexOf(it.level)+1]);}
+  go(tab){this.setState({tab,sheet:null,lowOnly:tab==='fridge'?this.state.lowOnly:false});}
+  stock(r){const lv=r.ings.map(([iid])=>{const it=this.item(iid);return it?it.level:'out';});
+    const missing=r.ings.filter(([iid])=>{const it=this.item(iid);return !it||it.level==='out';}).map(([iid])=>{const it=this.item(iid);return it?it.name:iid;});
+    if(missing.length) return {c:'#D6264F',t:'Missing '+missing[0].toLowerCase()+(missing.length>1?' +'+(missing.length-1):''),k:'missing'};
+    if(lv.some(l=>l==='low')) return {c:'#E3A21A',t:'Some low',k:'low'};
+    return {c:'#0F9D76',t:'All in stock',k:'ok'};}
+  toggleCook(key){const s=this.state;const e=s.plan[key];if(!e)return;const cooked=!e.cooked;const prevItems=s.items,prevPlan=s.plan;let items=s.items,changed=0;
+    if(cooked&&s.cookDec&&e.recipeId){const r=s.recipes.find(x=>x.id===e.recipeId);if(r)items=items.map(it=>{const g=r.ings.find(x=>x[0]===it.id);if(!g||g[2]==='none')return it;const nl=g[2]==='depletes'?'out':LVO[Math.min(4,LVO.indexOf(it.level)+1)];if(nl!==it.level){changed++;return {...it,level:nl};}return it;});}
+    this.vib();this.setState({items,plan:{...prevPlan,[key]:{...e,cooked}},shopStale:true});
+    if(cooked)this.toast(changed?'Cooked · '+changed+' ingredients lowered':'Marked cooked',()=>this.setState({items:prevItems,plan:prevPlan}));}
+  setPlan(key,entry,msg){const prev=this.state.plan;const plan={...prev};if(entry)plan[key]=entry;else delete plan[key];this.setState({plan,sheet:null,shopStale:true});if(msg)this.toast(msg,()=>this.setState({plan:prev}));}
+  slotRows(date){const s=this.state;return SLOTS.map(sl=>{const key=date+'|'+sl.k;const e=s.plan[key];const r=e&&e.recipeId?s.recipes.find(x=>x.id===e.recipeId):null;const st=r?this.stock(r):null;
+    return {slotName:sl.n,icon:'icon-'+sl.i,title:e?e.name:'Add a meal',titleColor:e?(e.cooked?'#A9A6C4':(e.freeText?'#C8C5DE':'#F3F1FA')):'#8784A6',deco:e&&e.cooked?'line-through':'none',
+      hasDot:!!(st&&!e.cooked),dot:st?st.c:'transparent',canCook:!!e,isEmpty:!e,
+      cookBg:e&&e.cooked?'#0F9D76':'transparent',cookBorder:e&&e.cooked?'#0F9D76':'rgba(255,255,255,.2)',cookColor:e&&e.cooked?'#0F1020':'#A9A6C4',
+      open:()=>this.setState({sheet:{type:'slot',date,slot:sl.k},pickQ:'',pickFilter:'suited',freeText:e&&e.freeText?e.freeText:''}),
+      toggleCook:()=>this.toggleCook(key)};});}
+  rowHandlers(id){return {
+    onDown:e=>{this._p={id,x:e.clientX,y:e.clientY,long:false,moved:false};clearTimeout(this._lp);this._lp=setTimeout(()=>{if(this._p&&this._p.id===id&&!this._p.moved){this._p.long=true;this.vib();this.setState({sheet:{type:'level',itemId:id},drag:null});}},450);},
+    onMove:e=>{const p=this._p;if(!p||p.id!==id)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;if(Math.abs(dx)>8||Math.abs(dy)>8){p.moved=true;clearTimeout(this._lp);}if(Math.abs(dx)>Math.abs(dy)&&p.moved)this.setState({drag:{id,dx:Math.max(-120,Math.min(120,dx))}});},
+    onUp:e=>{const p=this._p;this._p=null;clearTimeout(this._lp);this.setState({drag:null});if(!p||p.id!==id||p.long)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;
+      if(dx>60)this.setLevel(id,'full');else if(dx<-60)this.setLevel(id,'out');else if(Math.abs(dx)<8&&Math.abs(dy)<8)this.stepDown(id);},
+    onCancel:()=>{this._p=null;clearTimeout(this._lp);this.setState({drag:null});}};}
+  chip(on,accent){return {bg:on?(accent||'#F3F1FA'):'transparent',color:on?(accent?'#fff':'#17162B'):'#C8C5DE',border:on?(accent||'#F3F1FA'):'rgba(255,255,255,.14)'};}
+
+  renderVals(){
+    const s=this.state;const tabs5=(this.props.tabs??'4 tabs')==='5 tabs';const compact=(this.props.density??'Comfortable')==='Compact';
+    const tab=s.tab;const lowItems=s.items.filter(i=>LVR[i.level]<=1);const unchecked=s.shop.filter(x=>!x.checked);const cart=s.shop.filter(x=>x.checked);
+    const dayObj=DAYS.find(d=>d.key===s.day);
+    const planCount=d=>SLOTS.filter(sl=>s.plan[d+'|'+sl.k]).length;
+    const tabDefs=[{k:'today',n:'Today',i:'house'},{k:'plan',n:'Plan',i:'calendar-days'}].concat(tabs5?[{k:'recipes',n:'Recipes',i:'book-open'}]:[]).concat([{k:'fridge',n:'Fridge',i:'refrigerator'},{k:'shop',n:'Shop',i:'shopping-cart'}]);
+    const activeTab=tab==='recipe'?(tabs5?'recipes':s.prevTab):(tab==='settings'?'today':(tab==='recipes'&&!tabs5?s.prevTab:tab));
+    const tabs=tabDefs.map(t=>({name:t.n,icon:'icon-'+t.i,color:t.k===activeTab?'#F3F1FA':'#A9A6C4',pill:t.k===activeTab?'#24264A':'transparent',hasBadge:t.k==='shop'&&unchecked.length>0,badge:unchecked.length,go:()=>this.setState({tab:t.k,sheet:null,prevTab:t.k,lowOnly:false})}));
+
+    // fridge
+    const q=s.q.trim().toLowerCase();
+    const list=s.items.filter(i=>(s.lowOnly?LVR[i.level]<=1:(q?true:i.loc===s.loc))&&(!q||i.name.toLowerCase().includes(q)));
+    const groups=CATS.map(c=>({cat:c,items:list.filter(i=>i.cat===c).sort((a,b)=>((LVR[a.level]<=1?0:1)-(LVR[b.level]<=1?0:1))||a.name.localeCompare(b.name)).map(i=>{const dx=s.drag&&s.drag.id===i.id?s.drag.dx:0;const locN=LOCS.find(l=>l.k===i.loc).n;const meta=[s.lowOnly||q?locN:null,i.unit||null,i.staple?'Staple':null].filter(Boolean).join(' · ');
+      return {name:i.name,meta,showMeta:!!meta,bars:bars(i.level),label:LVN[i.level].toUpperCase(),labelColor:LVT[i.level],tx:'translateX('+dx+'px)',swipeBg:dx>0?'#0F9D76':(dx<0?'#D6264F':'transparent'),...this.rowHandlers(i.id)};})})).filter(g=>g.items.length);
+    const locSegs=LOCS.map(l=>{const on=!s.lowOnly&&!q&&s.loc===l.k;return {name:l.n,count:s.items.filter(i=>i.loc===l.k).length,bg:on?'#2E5BDB':'transparent',color:on?'#fff':'#A9A6C4',pick:()=>this.setState({loc:l.k,lowOnly:false,q:''})};});
+
+    // shop
+    const badgeFor=x=>x.source==='plan'?{badge:'Plan',badgeBg:'rgba(46,91,219,.24)',badgeColor:'#9DB4FF'}:x.source==='staple'?{badge:'Staple',badgeBg:'rgba(227,162,26,.2)',badgeColor:'#F0BE4E'}:{badge:'Manual',badgeBg:'rgba(255,255,255,.08)',badgeColor:'#C8C5DE'};
+    const toggleShop=x=>()=>{const prevShop=this.state.shop,prevItems=this.state.items;const it=x.itemId?this.item(x.itemId):null;
+      if(!x.checked){this.vib();this.setState({shop:prevShop.map(y=>y.id===x.id?{...y,checked:true,prevLevel:it?it.level:null}:y),items:it?prevItems.map(i=>i.id===it.id?{...i,level:'full'}:i):prevItems});
+        this.toast(it?x.name+' restocked to Full':x.name+' in cart',()=>this.setState({shop:prevShop,items:prevItems}));}
+      else{this.setState({shop:prevShop.map(y=>y.id===x.id?{...y,checked:false}:y),items:it&&x.prevLevel?prevItems.map(i=>i.id===it.id?{...i,level:x.prevLevel}:i):prevItems});}};
+    const shopGroups=CATS.map(c=>({cat:c,rows:unchecked.filter(x=>x.cat===c).map(x=>({name:x.name,short:x.short,...badgeFor(x),toggle:toggleShop(x),onBadge:()=>{if(x.source==='plan')this.setState({sheet:{type:'reason',shopId:x.id}});}}))})).filter(g=>g.rows.length);
+
+    // recipes
+    const rq=s.recQ.trim().toLowerCase();
+    const recFilters=[['all','All'],['breakfast','Breakfast'],['snack','Snacks'],['lunch','Lunch'],['dinner','Dinner'],['fav','Favorites']];
+    const recChips=recFilters.map(([k,n])=>({name:n,...this.chip(s.recSlot===k,'#8B3FD9'),pick:()=>this.setState({recSlot:k})}));
+    const matchSlot=(r,k)=>k==='all'||(k==='fav'?r.fav:(k==='snack'?r.slots.some(x=>x.startsWith('snack')):r.slots.includes(k)));
+    const tagStr=r=>[...new Set(r.slots.map(x=>SLOTN[x]))].join(' · ');
+    const toggleFav=id=>()=>this.setState({recipes:this.state.recipes.map(r=>r.id===id?{...r,fav:!r.fav}:r)});
+    const openRecipe=id=>()=>this.setState({tab:'recipe',recipeId:id,sheet:null,prevTab:s.tab==='recipe'?s.prevTab:(s.tab==='recipes'&&!tabs5?s.prevTab:s.tab)});
+    const recCards=s.recipes.filter(r=>matchSlot(r,s.recSlot)&&(!rq||r.name.toLowerCase().includes(rq))).map(r=>{const st=this.stock(r);return {name:r.name,tags:tagStr(r),prep:r.prep+' min',dot:st.c,stock:st.t,heart:r.fav?'#FF7A95':'#6E6B8F',toggleFav:toggleFav(r.id),open:()=>this.setState({tab:'recipe',recipeId:r.id,prevRecTab:'recipes'})};});
+
+    const rd=s.recipes.find(r=>r.id===s.recipeId)||s.recipes[0];const rdSt=this.stock(rd);
+    const lowN=rd.ings.filter(([iid])=>{const it=this.item(iid);return !it||LVR[it.level]<=1;}).length;
+
+    // sheet
+    const sh=s.sheet||{};
+    let slotSheet={};
+    if(sh.type==='slot'){const key=sh.date+'|'+sh.slot;const e=s.plan[key];const pq=s.pickQ.trim().toLowerCase();const sn=SLOTS.find(x=>x.k===sh.slot).n;
+      const pickChips=[['suited','Suited for '+SLOTN[sh.slot].toLowerCase()],['fav','Favorites'],['all','All']].map(([k,n])=>({name:n,...this.chip(s.pickFilter===k,'#2E5BDB'),pick:()=>this.setState({pickFilter:k})}));
+      const res=s.recipes.filter(r=>(s.pickFilter==='all'||(s.pickFilter==='fav'?r.fav:r.slots.includes(sh.slot)))&&(!pq||r.name.toLowerCase().includes(pq))).sort((a,b)=>(b.slots.includes(sh.slot)-a.slots.includes(sh.slot))||(b.fav-a.fav));
+      slotSheet={sheetTitle:sn+' · '+DAYS.find(d=>d.key===sh.date).label,hasEntry:!!e,pickChips,pickNone:!res.length,
+        pickResults:res.map(r=>{const st=this.stock(r);return {name:r.name,meta:r.prep+' min · '+st.t,dot:st.c,fav:r.fav,border:e&&e.recipeId===r.id?'#2E5BDB':'transparent',pick:()=>this.setPlan(key,{recipeId:r.id,name:r.name,cooked:false})};}),
+        clearSlot:()=>this.setPlan(key,null,sn+' cleared'),
+        saveFree:()=>{const t=this.state.freeText.trim();if(!t)return;this.setPlan(key,{freeText:t,name:t,cooked:false});}};}
+    let lv={};
+    if(sh.type==='level'){const it=this.item(sh.itemId);if(it)lv={lvName:it.name,lvMeta:LOCS.find(l=>l.k===it.loc).n+' · '+it.cat+(it.unit?' · '+it.unit:''),
+      lvOpts:LVO.map(l=>({label:LVN[l].toUpperCase(),bars:bars(l,'rgba(255,255,255,.14)'),border:it.level===l?LVC[l]:'transparent',bg:it.level===l?'rgba(255,255,255,.06)':'#1A1B33',color:LVT[l],pick:()=>{this.setLevel(it.id,l);this.setState({sheet:null});}})),
+      stapleTrack:it.staple?'#0F9D76':'rgba(255,255,255,.18)',stapleKnob:it.staple?'translateX(20px)':'none',
+      toggleStaple:()=>this.setState({items:this.state.items.map(i=>i.id===it.id?{...i,staple:!i.staple}:i)})};}
+    let add={};
+    if(sh.type==='add'){const inv=sh.mode==='inv';const nm=s.addName.trim();const key=nm.toLowerCase();
+      const dupItem=inv?s.items.find(i=>i.name.toLowerCase()===key):s.shop.find(x=>x.name.toLowerCase()===key&&!x.checked);
+      const cat=nm?guessCat(nm):'—';
+      const doAdd=()=>{if(!nm||dupItem)return;if(inv){const prev=this.state.items;const id='i'+Date.now();this.setState({items:[...prev,{id,name:nm,loc:s.addLoc,cat,level:'full',staple:false,unit:''}],addName:'',sheet:null,loc:s.addLoc,tab:s.tab==='fridge'?'fridge':s.tab});this.toast(nm+' added to '+LOCS.find(l=>l.k===s.addLoc).n,()=>this.setState({items:prev}));}
+        else{const prev=this.state.shop;this.setState({shop:[...prev,{id:'m'+Date.now(),name:nm,cat,source:'manual',rs:[],checked:false}],addName:'',sheet:null});this.toast(nm+' added to list',()=>this.setState({shop:prev}));}};
+      add={addTitle:inv?'Add item':'Add to list',addPlaceholder:inv?'Item name, e.g. Greek yogurt':'e.g. Birthday candles',addIsInv:inv,addCat:cat,addDup:!!dupItem,
+        addDupMsg:dupItem?(inv?'Already in '+LOCS.find(l=>l.k===dupItem.loc).n+' as "'+dupItem.name+'"':'Already on your list'):'',addBorder:dupItem?'#D6264F':'rgba(255,255,255,.08)',
+        addLocs:LOCS.map(l=>({name:l.n,...this.chip(s.addLoc===l.k,'#2E5BDB'),pick:()=>this.setState({addLoc:l.k})})),
+        addOpacity:nm&&!dupItem?1:.45,addCta:inv?'Add as Full':'Add to list',doAdd,onAddKey:e=>{if(e.key==='Enter')doAdd();}};}
+    let ap={};
+    if(sh.type==='addplan'){const r=rd;const d=s.apDay||DAYS[3].key;const sl=s.apSlot||r.slots[0];const key=d+'|'+sl;const ex=s.plan[key];const dd=DAYS.find(x=>x.key===d);
+      ap={apName:r.name,apDays:DAYS.map(x=>({dow:x.dow,dom:x.dom,...this.chip(x.key===d,'#2E5BDB'),pick:()=>this.setState({apDay:x.key})})),
+        apSlots:SLOTS.slice().sort((a,b)=>r.slots.includes(b.k)-r.slots.includes(a.k)).map(x=>({name:x.n,...this.chip(x.k===sl,'#2E5BDB'),pick:()=>this.setState({apSlot:x.k})})),
+        apReplaces:!!ex,apReplaceName:ex?ex.name:'',apCta:'Add to '+dd.dow+' · '+SLOTS.find(x=>x.k===sl).n,
+        doAddPlan:()=>this.setPlan(key,{recipeId:r.id,name:r.name,cooked:false},r.name+' → '+dd.dow+' '+SLOTS.find(x=>x.k===sl).n)};}
+    let rs={};
+    if(sh.type==='reason'){const x=s.shop.find(y=>y.id===sh.shopId);if(x){const it=x.itemId?this.item(x.itemId):null;
+      rs={rsName:x.name,rsLine:(it?'Currently '+LVN[it.level]:'Not in inventory')+(x.short?' · may run short':''),
+        rsRecipes:x.rs.map(rid=>{const r=s.recipes.find(z=>z.id===rid);const days=DAYS.filter(d=>SLOTS.some(sl=>{const e=s.plan[d.key+'|'+sl.k];return e&&e.recipeId===rid&&!e.cooked;})).map(d=>d.dow);return {name:r?r.name:'Recipe deleted',when:days.length?'Planned '+days.join(', '):'',open:openRecipe(rid)};})};}}
+
+    const seg=(opts,val,setKey)=>opts.map(o=>({name:o,bg:val===o?'#F3F1FA':'transparent',color:val===o?'#17162B':'#A9A6C4',pick:()=>this.setState({[setKey]:o})}));
+
+    return {
+      isToday:tab==='today',isPlan:tab==='plan',isFridge:tab==='fridge',isShop:tab==='shop',isRecipes:tab==='recipes',isRecipe:tab==='recipe',isSettings:tab==='settings',
+      showHeaderRecipes:!tabs5,showRecipesBack:!tabs5,tabs,
+      openSettings:()=>this.setState({tab:'settings',prevTab:'today'}),openRecipes:()=>this.setState({tab:'recipes',prevTab:tab}),
+      back:()=>this.setState({tab:tab==='recipe'?(this.state.prevRecTab==='recipes'?'recipes':s.prevTab):s.prevTab,prevRecTab:null}),
+      openLow:()=>this.setState({tab:'fridge',lowOnly:true,q:''}),goShop:()=>this.setState({tab:'shop',prevTab:'shop'}),
+      lowCount:lowItems.length,shopCount:unchecked.length,todaySlots:this.slotRows(TODAY),todayPlanned:planCount(TODAY),
+      dayPills:DAYS.map(d=>{const on=d.key===s.day,isT=d.key===TODAY;const n=planCount(d.key);return {dow:isT?'Today':d.dow,dom:d.dom,bg:on?'#2E5BDB':'#1A1B33',color:on?'#fff':'#F3F1FA',border:isT?'#F2D544':(on?'#2E5BDB':'rgba(255,255,255,.06)'),dots:[0,1,2,3,4].map(i=>({c:i<n?(on?'#fff':'#F2D544'):'rgba(255,255,255,.18)'})),pick:()=>this.setState({day:d.key})};}),
+      planSlots:this.slotRows(s.day),planDayLabel:dayObj.key===TODAY?'Today · '+dayObj.label:dayObj.label,planDayCount:planCount(s.day),
+      copyNext:()=>{const i=DAYS.findIndex(d=>d.key===s.day);if(i>=6){this.toast('Sunday is the last day of this week');return;}const nx=DAYS[i+1];const prev=this.state.plan;const plan={...prev};let n=0;
+        SLOTS.forEach(sl=>{const e=prev[s.day+'|'+sl.k];if(e){plan[nx.key+'|'+sl.k]={...e,cooked:false};n++;}});if(!n){this.toast('Nothing to copy');return;}this.setState({plan,day:nx.key,shopStale:true});this.toast('Copied '+n+' meals to '+nx.dow,()=>this.setState({plan:prev,day:s.day}));},
+      copyWeek:()=>{const prev=this.state.plan;const plan={...prev};let n=0;DAYS.forEach(d=>SLOTS.forEach((sl,j)=>{const k=d.key+'|'+sl.k;if(!plan[k]&&d.key>=TODAY){plan[k]=P(LASTWEEK[j]);n++;}}));if(!n){this.toast('Every slot is already filled');return;}this.setState({plan,shopStale:true});this.toast('Filled '+n+' empty slots from last week',()=>this.setState({plan:prev}));},
+      clearDay:()=>{const prev=this.state.plan;const plan={...prev};let n=0;SLOTS.forEach(sl=>{if(plan[s.day+'|'+sl.k]){delete plan[s.day+'|'+sl.k];n++;}});if(!n)return;this.setState({plan,shopStale:true});this.toast('Cleared '+n+' meals',()=>this.setState({plan:prev}));},
+      itemCount:s.items.length,q:s.q,onQ:e=>this.setState({q:e.target.value}),lowOnly:s.lowOnly,toggleLow:()=>this.setState({lowOnly:!s.lowOnly,q:''}),
+      lowBg:s.lowOnly?'rgba(214,38,79,.2)':'transparent',lowBorder:s.lowOnly?'#D6264F':'rgba(255,255,255,.14)',lowColor:s.lowOnly?'#FF7A95':'#C8C5DE',lowDot:s.lowOnly?'#FF7A95':'transparent',
+      locSegs,groups,rowH:compact?'48px':'60px',noMenu:e=>e.preventDefault(),fridgeEmpty:!groups.length,fridgeEmptyMsg:s.lowOnly?'Nothing is low. Nice.':(q?'No items match "'+s.q+'".':'Add your first item with +.'),
+      shopGroups,shopEmpty:!unchecked.length,hasCart:cart.length>0,cartCount:cart.length,cartOpen:s.cartOpen,cartChevron:s.cartOpen?'icon-chevron-up':'icon-chevron-down',toggleCart:()=>this.setState({cartOpen:!s.cartOpen}),
+      cartRows:cart.map(x=>({name:x.name,note:x.itemId?'→ Full':'',toggle:toggleShop(x)})),shopStale:s.shopStale,
+      regen:()=>{const prev=this.state.shop;const shop=gen(this.state.items,this.state.plan,this.state.recipes,prev);this.setState({shop,shopStale:false});this.toast('List updated · '+shop.filter(x=>!x.checked).length+' to buy',()=>this.setState({shop:prev}));},
+      shareList:()=>this.toast('Shared '+unchecked.length+' items as text'),
+      finishTrip:()=>{const prev=this.state.shop;const n=cart.filter(x=>x.itemId).length;this.setState({shop:prev.filter(x=>!x.checked)});this.toast('Trip done · '+n+' items restocked',()=>this.setState({shop:prev}));},
+      recQ:s.recQ,onRecQ:e=>this.setState({recQ:e.target.value}),recChips,recCards,
+      rdName:rd.name,rdTags:tagStr(rd),rdPrep:rd.prep+' min',rdServ:rd.serv+(rd.serv>1?' servings':' serving'),rdHeart:rd.fav?'#FF7A95':'#A9A6C4',rdFav:toggleFav(rd.id),
+      rdStock:lowN?lowN+' of '+rd.ings.length+' low or out':'All in stock',rdStockColor:rdSt.k==='ok'?'#3FD1A6':(rdSt.k==='low'?'#F0BE4E':'#FF7A95'),
+      rdIngs:rd.ings.map(([iid,qty])=>{const it=this.item(iid)||{name:iid,level:'out'};return {name:it.name,qty,bars:bars(it.level),label:LVN[it.level].toUpperCase(),labelColor:LVT[it.level],open:()=>this.item(iid)&&this.setState({sheet:{type:'level',itemId:iid}})};}),
+      rdSteps:rd.steps.map((t,i)=>({n:i+1,text:t})),openAddPlan:()=>this.setState({sheet:{type:'addplan'},apDay:null,apSlot:null}),
+      themeSeg:seg(['System','Dark','Light'],s.theme,'theme'),weekSeg:seg(['Mon','Sun'],s.week,'week'),
+      cookTrack:s.cookDec?'#0F9D76':'rgba(255,255,255,.18)',cookKnob:s.cookDec?'translateX(20px)':'none',toggleCookDec:()=>this.setState({cookDec:!s.cookDec}),
+      backupDue:!s.backedUp,lastBackup:s.backedUp?'Just now':'16 days ago',backupNow:()=>{this.setState({backedUp:true});this.toast('Saved fridge-follower-backup-2026-09-30.json');},
+      restore:()=>this.toast('Pick a backup file to preview before restoring'),starterPack:()=>this.toast('Starter pack adds 40 items and 12 recipes'),
+      resetLabel:s.resetArm?'Tap again to erase everything':'Reset all data',resetAll:()=>{if(!s.resetArm){this.setState({resetArm:true});setTimeout(()=>this.setState({resetArm:false}),3000);}else{this.setState({resetArm:false});this.toast('Reset is disabled in the prototype');}},
+      showFab:['today','plan','fridge'].includes(tab)||(tab==='shop'&&!cart.length),
+      openAdd:()=>this.setState({sheet:{type:'add',mode:tab==='shop'?'shop':'inv'},addName:'',addLoc:tab==='fridge'&&!s.lowOnly?s.loc:'fridge'}),
+      addName:s.addName,onAddName:e=>this.setState({addName:e.target.value}),
+      toastOn:!!s.toast,toastMsg:s.toast?s.toast.msg:'',toastHasUndo:!!(s.toast&&s.toast.undo),undo:()=>{const u=s.toast&&s.toast.undo;clearTimeout(this._tt);this.setState({toast:null});if(u)u();},
+      sheetOpen:!!s.sheet,closeSheet:()=>this.setState({sheet:null}),
+      isSlotSheet:sh.type==='slot',isLevelSheet:sh.type==='level'&&!!lv.lvName,isAddSheet:sh.type==='add',isAddPlanSheet:sh.type==='addplan',isReasonSheet:sh.type==='reason',
+      pickQ:s.pickQ,onPickQ:e=>this.setState({pickQ:e.target.value}),freeText:s.freeText,onFreeText:e=>this.setState({freeText:e.target.value}),
+      ...slotSheet,...lv,...add,...ap,...rs
+    };
+  }
+}
+</script>
+</body>
+</html>
