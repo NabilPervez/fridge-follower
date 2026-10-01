@@ -21,6 +21,9 @@ export default defineConfig({
       },
       manifest: {
         id: '/',
+        lang: 'en',
+        dir: 'ltr',
+        categories: ['food', 'lifestyle', 'productivity'],
         name: 'Fridge Follower',
         short_name: 'Fridge',
         description: 'Plan meals, track what is in the fridge, and build the shopping list. Works offline; data stays on your phone.',
@@ -28,6 +31,12 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'portrait',
+        // Reuse the open window instead of stacking a second copy (also what a TWA wants).
+        launch_handler: { client_mode: 'navigate-existing' },
+        shortcuts: [
+          { name: 'Shopping list', short_name: 'Shop', url: '/shop', icons: [{ src: 'pwa-192.png', sizes: '192x192' }] },
+          { name: 'Week plan', short_name: 'Plan', url: '/plan', icons: [{ src: 'pwa-192.png', sizes: '192x192' }] },
+        ],
         background_color: '#0B0C1A',
         theme_color: '#0B0C1A',
         icons: [

@@ -35,7 +35,7 @@ Vite · React 19 · TypeScript · React Router · Zustand (UI state) · Dexie + 
 
 - Five tabs (Today · Plan · Recipes · Fridge · Shop). Settings opens from Today.
 - Real dates. Plan has previous/next week buttons. The shopping list covers today plus the next 6 days.
-- First launch is empty. A welcome card offers the starter pack, which contains the prototype's sample kitchen.
+- First launch goes to `/onboarding`: three screens, then Start with a sample kitchen, Start empty, or I have a backup file. Storage persistence is requested at the end of it. Existing users with data skip it. Settings has "Show the intro again" and, where the browser supports it, "Install app".
 - The list is flagged out of date when the plan or recipes change, or when an item crosses its low threshold.
 - Plan entry IDs are `date|slot` so each slot holds exactly one entry.
-- Not built yet: light theme, the wide 7-column week view (≥768px), onboarding screens, Android TWA packaging (Bubblewrap + `assetlinks.json`).
+- Not built yet: light theme, the wide 7-column week view (≥768px), Android TWA packaging (Bubblewrap + `assetlinks.json`).

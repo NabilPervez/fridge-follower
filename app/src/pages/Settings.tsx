@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import {
   CalendarBlank,
   CaretRight,
   CloudWarning,
+  DeviceMobile,
   DownloadSimple,
   Fire,
+  HandWaving,
   Package,
   Palette,
   ShieldCheck,
@@ -19,6 +22,7 @@ import { loadStarterPack } from '../data/starter';
 import { BACKUP_REMINDER_DAYS, type Settings as S } from '../data/settings';
 import { toast, useUI } from '../state/ui';
 import { BackButton, Toggle } from '../ui/kit';
+import { useInstallPrompt } from '../ui/install';
 
 const DAY_MS = 86_400_000;
 
@@ -48,6 +52,8 @@ function Seg<T extends string>({ opts, value, onPick, label }: { opts: T[]; valu
 }
 
 export function Settings() {
+  const navigate = useNavigate();
+  const install = useInstallPrompt();
   const s = useSettings();
   const today = useToday();
   const kitchen = useKitchen();
@@ -195,6 +201,18 @@ export function Settings() {
             <span style={{ flex: 1 }}>Load starter pack</span>
             <CaretRight weight="bold" style={{ color: 'var(--text-dim)' }} />
           </button>
+          {install.canInstall && (
+            <button type="button" className="set-row" style={{ paddingRight: 16 }} onClick={install.prompt}>
+              <DeviceMobile weight="duotone" style={{ color: 'var(--citrine)' }} />
+              <span style={{ flex: 1 }}>Install app</span>
+              <CaretRight weight="bold" style={{ color: 'var(--text-dim)' }} />
+            </button>
+          )}
+          <button type="button" className="set-row" style={{ paddingRight: 16 }} onClick={() => navigate('/onboarding')}>
+            <HandWaving weight="duotone" style={{ color: 'var(--emerald-t)' }} />
+            <span style={{ flex: 1 }}>Show the intro again</span>
+            <CaretRight weight="bold" style={{ color: 'var(--text-dim)' }} />
+          </button>
         </div>
 
         <div className="glass list">
@@ -206,7 +224,7 @@ export function Settings() {
               if (!resetArm) return setResetArm(true);
               setResetArm(false);
               await resetAll();
-              toast('All data erased');
+              navigate('/onboarding', { replace: true });
             }}
           >
             <Trash weight="duotone" />
