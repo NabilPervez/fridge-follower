@@ -28,6 +28,7 @@ import { RecipeEditor } from './pages/RecipeEditor';
 import { Settings } from './pages/Settings';
 import { Onboarding } from './pages/Onboarding';
 import { getSetting, setSetting } from './data/actions';
+import { startHouseholdSync } from './data/household';
 import { db } from './data/db';
 import './ui/install';
 
@@ -71,6 +72,8 @@ void (async () => {
   await setSetting('persistAsked', true);
   await navigator.storage?.persist?.().catch(() => false);
 })();
+
+startHouseholdSync();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

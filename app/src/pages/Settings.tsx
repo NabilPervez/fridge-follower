@@ -23,6 +23,7 @@ import { BACKUP_REMINDER_DAYS, type Settings as S } from '../data/settings';
 import { toast, useUI } from '../state/ui';
 import { BackButton, Toggle } from '../ui/kit';
 import { useInstallPrompt } from '../ui/install';
+import { FamilyTableSettings } from '../ui/FamilyTable';
 
 const DAY_MS = 86_400_000;
 
@@ -130,6 +131,8 @@ export function Settings() {
             </button>
           </div>
         )}
+
+        <FamilyTableSettings />
 
         <div className="glass list">
           <div className="set-row">

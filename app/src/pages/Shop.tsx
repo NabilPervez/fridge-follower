@@ -12,6 +12,7 @@ import {
   ShareNetwork,
 } from '@phosphor-icons/react';
 import type { ShoppingItem } from '../data/db';
+import { FamilyTableShop } from '../ui/FamilyTable';
 import { useSettings, useShopping, useToday } from '../data/hooks';
 import { finishTrip, toggleShopItem } from '../data/actions';
 import { regenerate } from '../state/feedback';
@@ -157,6 +158,7 @@ export function Shop() {
             )}
           </div>
         )}
+        <FamilyTableShop />
         <div style={{ flex: '0 0 160px' }} />
       </main>
       {cart.length > 0 && (
