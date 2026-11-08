@@ -3,7 +3,7 @@
 // Contract: family-table/docs/sync.md. Config lives in the settings table under "household".
 import { db, type Item, type Level } from './db';
 
-export const FT_URL = 'https://family-table-2czd.netlify.app';
+export const FT_URL = 'https://family-table-np.netlify.app';
 
 export interface HouseholdCfg { token: string; householdId: string; cursor: number; lastSync?: number }
 export interface FtGrocery { id: string; weekStart: string; key: string; name: string; checked: boolean; manual?: boolean; deleted?: boolean; updatedAt: number; updatedBy?: string }
